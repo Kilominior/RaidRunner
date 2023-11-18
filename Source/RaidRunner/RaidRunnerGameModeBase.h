@@ -14,4 +14,5 @@ class RAIDRUNNER_API ARaidRunnerGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+	virtual void StartPlay() override;
 };
