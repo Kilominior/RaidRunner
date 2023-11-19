@@ -2,8 +2,8 @@
 
 
 #include "RunnerCharacter.h"
-#include "../../../../../Extra_Libs_and_Include/UnrealEngine/Engine/Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputSubsystems.h"
-#include "../../../../../Extra_Libs_and_Include/UnrealEngine/Engine/Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
+#include <EnhancedInputComponent.h>
+#include <EnhancedInputSubsystems.h>
 
 // Sets default values
 ARunnerCharacter::ARunnerCharacter()

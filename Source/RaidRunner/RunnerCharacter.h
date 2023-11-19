@@ -13,33 +13,32 @@ class RAIDRUNNER_API ARunnerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	// Mesh相关
-	// 第一人称手臂Mesh
+	/** 第一人称手臂Mesh */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	USkeletalMeshComponent* Mesh1P;
 
-	// 相机相关
+	/** 相机组件 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* RunnerCameraComponent;
 
-	// 输入相关
-	/** MappingContext */
+	/** 默认输入上下文 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* DefaultMappingContext;
 
-	/** Look Input Action */
+	/** 视角旋转输入 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
-	/** Move Input Action */
+	/** 角色移动输入 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* MoveAction;
 
-	/** Jump Input Action */
+	/** 跳跃输入 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
 
-	/** Throw Input Action */
+
+	/** 切换到投掷物 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ThrowAction;
 
@@ -60,9 +59,11 @@ public:
 
 
 public:
+	// 视角旋转
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
 
+	// 角色移动
 	UFUNCTION()
 	void Move(const FInputActionValue& Value);
 };
