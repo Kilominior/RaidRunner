@@ -12,6 +12,10 @@ UCLASS()
 class RAIDRUNNER_API ADefaultProjectile : public AActor
 {
 	GENERATED_BODY()
+
+	/** Mesh组件 */
+	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
+	UStaticMeshComponent* ProjectileMesh;
 	
 	/** 球组件 */
 	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
@@ -34,6 +38,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// 在指定方向发射子弹
+	UFUNCTION()
 	void FireInDirection(const FVector& ShootDirection);
 
 };

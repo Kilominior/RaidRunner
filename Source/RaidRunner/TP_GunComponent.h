@@ -9,17 +9,17 @@
 #include "TP_GunComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class RAIDRUNNER_API UTP_GunComponent : public UActorComponent
+UCLASS(Blueprintable, BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class RAIDRUNNER_API UTP_GunComponent : public USkeletalMeshComponent
 {
 	GENERATED_BODY()
 
 public:
-	// 枪支对应的发射物类
+	/** 枪支对应的发射物类 */
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class ADefaultProjectile> ProjectileClass;
 
-	// 枪口相对于相机位置的偏移
+	/** 枪口相对于相机位置的偏移 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	FVector MuzzleOffset;
 
@@ -47,12 +47,14 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 
-	/** Attaches the actor to a FirstPersonCharacter */
+	// 将武器及其输入上下文绑定到目标角色
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void AttachWeapon(ARunnerCharacter* TargetCharacter);
 
