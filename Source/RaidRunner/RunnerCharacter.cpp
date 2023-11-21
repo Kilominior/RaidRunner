@@ -4,6 +4,7 @@
 #include "RunnerCharacter.h"
 #include <EnhancedInputComponent.h>
 #include <EnhancedInputSubsystems.h>
+#include "Gun.h"
 
 // Sets default values
 ARunnerCharacter::ARunnerCharacter()
@@ -43,6 +44,10 @@ ARunnerCharacter::ARunnerCharacter()
 
 	// 不允许玩家看见第三人称Mesh
 	GetMesh()->SetOwnerNoSee(true);
+
+	/* 武器槽位状态 */
+	WeaponSlotNow = 0;
+	SwitchingWeaponTo = 0;
 }
 
 // Called when the game starts or when spawned
@@ -88,6 +93,15 @@ void ARunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		// 跳跃与停止
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+		// 尝试切换武器
+		EnhancedInputComponent->BindAction(SlotAction1, ETriggerEvent::Triggered, this, &ARunnerCharacter::TrySlotChange, 1);
+		EnhancedInputComponent->BindAction(SlotAction2, ETriggerEvent::Triggered, this, &ARunnerCharacter::TrySlotChange, 2);
+	
+		// 完成切换武器
+		EnhancedInputComponent->BindAction(SlotAction1, ETriggerEvent::Completed, this, &ARunnerCharacter::EndSlotChange, 1);
+		EnhancedInputComponent->BindAction(SlotAction2, ETriggerEvent::Completed, this, &ARunnerCharacter::EndSlotChange, 2);
+
 	}
 }
 
@@ -114,6 +128,74 @@ void ARunnerCharacter::Move(const FInputActionValue& Value)
 	{
 		AddMovementInput(GetActorForwardVector(), MovementDir.Y);
 		AddMovementInput(GetActorRightVector(), MovementDir.X);
-		UE_LOG(LogTemp, Log, TEXT("行动方向：%f, %f"), MovementDir.X, MovementDir.Y);
+		//UE_LOG(LogTemp, Log, TEXT("行动方向：%f, %f"), MovementDir.X, MovementDir.Y);
 	}
+}
+
+void ARunnerCharacter::TrySlotChange(const int SlotId)
+{
+	// 当目前已有其他尝试切换武器的按键按下，则无视该次操作
+	// 当目前所持有武器已经为目标武器，则无视该次操作
+	if (SwitchingWeaponTo != 0 || WeaponSlotNow == SlotId)
+	{
+		return;
+	}
+	
+	UE_LOG(LogTemp, Log, TEXT("尝试切换到槽位%d"), SlotId);
+	SwitchingWeaponTo = SlotId;
+}
+
+void ARunnerCharacter::EndSlotChange(const int SlotId)
+{
+	// 当目前还有其他尝试切换武器的按键按下，则无视该次操作
+	// 当目前所持有武器已经为目标武器，则无视该次操作
+	if (SwitchingWeaponTo != SlotId || WeaponSlotNow == SlotId)
+	{
+		return;
+	}
+
+	SlotChangeTo(SlotId);
+}
+
+void ARunnerCharacter::SlotChangeTo(const int SlotId)
+{
+	UE_LOG(LogTemp, Log, TEXT("切换到槽位%d的武器"), SlotId);
+
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+
+		if (SlotId == 1)
+		{
+
+			// 获取相机朝向
+			FRotator SpawnRotation = RunnerCameraComponent->GetComponentRotation();
+			// 枪支方向略微偏斜
+			//SpawnRotation.Yaw += 10.0f;
+
+			// 将枪械位置从相机空间变换到世界空间
+			FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(FVector(10.0, 0.0, 0.0));
+
+			// 生成武器
+			ABaseWeapon* Gun1 = World->SpawnActor<AGun>(SpawnLocation, SpawnRotation, SpawnParams);
+			Gun1->AttachWeapon(this);
+		}
+
+		/*switch (SlotId)
+		{
+		case 1:
+				break;
+		case 2:
+			break;
+
+		default:
+			break;
+		}*/
+	}
+
+	// 完成切换武器后更新切换武器状态记录
+	WeaponSlotNow = SlotId;
+	SwitchingWeaponTo = 0;
 }

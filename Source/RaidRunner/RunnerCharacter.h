@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "BaseWeapon.h"
 #include "RunnerCharacter.generated.h"
 
 UCLASS()
@@ -37,6 +38,21 @@ class RAIDRUNNER_API ARunnerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
 
+	// 当前使用中的武器槽位
+	UPROPERTY(VisibleAnywhere)
+	uint8 WeaponSlotNow;
+
+	// 将要切换到的武器槽位，未在切换时为0
+	UPROPERTY(VisibleAnywhere)
+	uint8 SwitchingWeaponTo;
+
+	/** 切换到1号武器 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* SlotAction1;
+
+	/** 切换到2号武器 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* SlotAction2;
 
 	/** 切换到投掷物 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -66,4 +82,19 @@ public:
 	// 角色移动
 	UFUNCTION()
 	void Move(const FInputActionValue& Value);
+
+	// 尝试进行武器槽位切换，按下按键触发
+	UFUNCTION()
+	void TrySlotChange(const int SlotId);
+
+	// 结束武器槽位切换的按键操作，进行能否切换的判定，若能则执行切换
+	UFUNCTION()
+	void EndSlotChange(const int SlotId);
+
+	// 切换到指定槽位的武器
+	UFUNCTION()
+	void SlotChangeTo(const int SlotId);
+
+	// 返回第一人称Mesh
+	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 };
