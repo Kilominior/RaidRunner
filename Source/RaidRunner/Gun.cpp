@@ -36,12 +36,15 @@ void AGun::Tick(float DeltaTime)
 
 USkeletalMeshComponent* AGun::GetWeaponComponent()
 {
-	UE_LOG(LogTemp, Log, TEXT("孩子"));
 	return GunComponent;
 }
 
 void AGun::AttachWeapon(ARunnerCharacter* TargetCharacter)
 {
-	UE_LOG(LogTemp, Log, TEXT("孩子"));
 	GunComponent->AttachWeapon(TargetCharacter);
+}
+
+void AGun::UnbindWeapon()
+{
+	GunComponent->UnbindWeapon();
 }

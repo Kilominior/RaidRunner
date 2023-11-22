@@ -37,4 +37,8 @@ public:
 	// 将当前武器绑定到角色，调用组件同名方法以实现
 	UFUNCTION()
 	virtual void AttachWeapon(ARunnerCharacter* TargetCharacter);
+
+	// 将当前武器从角色上解绑，调用组件同名方法以实现
+	UFUNCTION()
+	virtual void UnbindWeapon();
 };

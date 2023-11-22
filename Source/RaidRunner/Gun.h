@@ -33,4 +33,6 @@ public:
 	virtual USkeletalMeshComponent* GetWeaponComponent() override;
 
 	virtual void AttachWeapon(ARunnerCharacter* TargetCharacter) override;
+
+	virtual void UnbindWeapon() override;
 };

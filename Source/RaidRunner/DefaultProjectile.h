@@ -41,4 +41,8 @@ public:
 	UFUNCTION()
 	void FireInDirection(const FVector& ShootDirection);
 
+	// 发生碰撞时执行
+	UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+
 };
