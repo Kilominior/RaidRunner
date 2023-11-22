@@ -19,6 +19,8 @@ UTP_GunComponent::UTP_GunComponent()
 	// 设置子弹生成位置
 	MuzzleOffset.Set(100.0f, 0.0f, 0.0f);
 
+	bHasOwner = false;
+
 	// 默认枪械模型为AR4
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> Mesh(TEXT("'/Game/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SK_AR4.SK_AR4'"));
 	if (Mesh.Succeeded())
@@ -64,19 +66,7 @@ void UTP_GunComponent::BeginPlay()
 
 void UTP_GunComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (OwnerCharacter == nullptr)
-	{
-		return;
-	}
-
-	// 移除玩家身上的枪械输入上下文
-	if (APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->RemoveMappingContext(GunMappingContext);
-		}
-	}
+	UnbindWeapon();
 }
 
 
@@ -95,6 +85,7 @@ void UTP_GunComponent::AttachWeapon(ARunnerCharacter* TargetCharacter)
 	{
 		return;
 	}
+	bHasOwner = true;
 
 	// 将武器绑定到第一人称Mesh上
 	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
@@ -122,10 +113,29 @@ void UTP_GunComponent::AttachWeapon(ARunnerCharacter* TargetCharacter)
 	}
 }
 
+void UTP_GunComponent::UnbindWeapon()
+{
+	if (OwnerCharacter == nullptr)
+	{
+		return;
+	}
+
+	bHasOwner = false;
+
+	// 移除玩家身上的枪械输入上下文
+	if (APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->RemoveMappingContext(GunMappingContext);
+		}
+	}
+}
+
 void UTP_GunComponent::Shoot()
 {
 	// 当枪拥有主人时才发射
-	if (OwnerCharacter == nullptr || OwnerCharacter->GetController() == nullptr)
+	if (!bHasOwner || OwnerCharacter->GetController() == nullptr)
 	{
 		return;
 	}
@@ -144,7 +154,7 @@ void UTP_GunComponent::Shoot()
 		//SpawnRotation.Pitch += 10.0f;
 
 		// 将枪口偏移从相机空间变换到世界空间
-		const FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
+		const FVector SpawnLocation = OwnerCharacter->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
 
 		UWorld* World = GetWorld();
 		if (World)

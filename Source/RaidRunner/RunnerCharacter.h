@@ -46,6 +46,10 @@ class RAIDRUNNER_API ARunnerCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere)
 	uint8 SwitchingWeaponTo;
 
+	// 当前使用中的武器实例
+	UPROPERTY(VisibleAnywhere)
+	ABaseWeapon* WeaponNow;
+
 	/** 切换到1号武器 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* SlotAction1;

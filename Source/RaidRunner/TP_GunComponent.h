@@ -36,6 +36,9 @@ public:
 	class UInputAction* ReloadAction;
 
 private:
+	/* 被一个角色持有 */
+	bool bHasOwner;
+
 	/** 持有本枪械的角色 */
 	ARunnerCharacter* OwnerCharacter;
 
@@ -57,6 +60,10 @@ public:
 	// 将武器及其输入上下文绑定到目标角色
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void AttachWeapon(ARunnerCharacter* TargetCharacter);
+
+	// 将武器与角色解绑
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void UnbindWeapon();
 
 	// 开枪
 	UFUNCTION(BlueprintCallable, Category = "Weapon")

@@ -27,11 +27,13 @@ void ABaseWeapon::Tick(float DeltaTime)
 
 USkeletalMeshComponent* ABaseWeapon::GetWeaponComponent()
 {
-	UE_LOG(LogTemp, Log, TEXT("父亲"));
 	return nullptr;
 }
 
 void ABaseWeapon::AttachWeapon(ARunnerCharacter* TargetCharacter)
 {
-	UE_LOG(LogTemp, Log, TEXT("父亲"));
+}
+
+void ABaseWeapon::UnbindWeapon()
+{
 }

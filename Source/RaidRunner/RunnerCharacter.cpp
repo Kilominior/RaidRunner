@@ -164,6 +164,17 @@ void ARunnerCharacter::SlotChangeTo(const int SlotId)
 	UWorld* World = GetWorld();
 	if (World)
 	{
+		// 销毁原来的武器
+		if (WeaponSlotNow != 0 && WeaponNow != nullptr) {
+			UE_LOG(LogTemp, Log, TEXT("销毁原有武器"));
+			// 解绑
+			WeaponNow->UnbindWeapon();
+
+			// 销毁
+			WeaponNow->Destroy();
+		}
+
+		// 初始化生成参数
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this;
 
@@ -176,11 +187,15 @@ void ARunnerCharacter::SlotChangeTo(const int SlotId)
 			//SpawnRotation.Yaw += 10.0f;
 
 			// 将枪械位置从相机空间变换到世界空间
-			FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(FVector(10.0, 0.0, 0.0));
+			FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(FVector(0.0, 0.0, 0.0));
 
 			// 生成武器
-			ABaseWeapon* Gun1 = World->SpawnActor<AGun>(SpawnLocation, SpawnRotation, SpawnParams);
-			Gun1->AttachWeapon(this);
+			WeaponNow = World->SpawnActor<AGun>(SpawnLocation, SpawnRotation, SpawnParams);
+			WeaponNow->AttachWeapon(this);
+		}
+		else if (SlotId == 2)
+		{
+			
 		}
 
 		/*switch (SlotId)
