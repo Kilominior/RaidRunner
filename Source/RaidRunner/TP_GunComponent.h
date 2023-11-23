@@ -20,8 +20,16 @@ public:
 	TSubclassOf<class ADefaultProjectile> ProjectileClass;
 
 	/** 枪口相对于相机位置的偏移 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gun)
 	FVector MuzzleOffset;
+
+	// 弹仓内当前的子弹数量
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gun)
+	uint8 CurrentAmmoNum;
+	
+	// 弹仓总容量
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gun)
+	uint8 MagazineCapacity;
 
 	/** 枪械输入上下文 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
