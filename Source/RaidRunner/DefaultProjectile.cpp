@@ -43,7 +43,8 @@ ADefaultProjectile::ADefaultProjectile()
         static ConstructorHelpers::FObjectFinder<UStaticMesh> Mesh(TEXT("'/Game/FPS_Weapon_Bundle/Weapons/Meshes/Ammunition/SM_Shell_556x45.SM_Shell_556x45'"));
         ProjectileMesh->SetStaticMesh(Mesh.Object);
 
-        //ProjectileMesh->SetRelativeScale3D(FVector(10.0, 10.0, 10.0));
+        ProjectileMesh->SetRelativeScale3D(FVector(5.0, 5.0, 5.0));
+        ProjectileMesh->SetRelativeRotation(FRotator(0.0, -90.0, 0.0));
         ProjectileMesh->SetupAttachment(RootComponent);
     }
 
@@ -93,7 +94,7 @@ void ADefaultProjectile::FireInDirection(const FVector& ShootDirection)
 
 void ADefaultProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
-    UE_LOG(LogTemp, Log, TEXT("子弹：发生碰撞！"));
+    UE_LOG(LogTemp, Log, TEXT("子弹：与%s发生碰撞！"), *OtherActor->GetFName().ToString());
     // 对于碰撞物，施加一道力
     if (OtherActor != this && OtherComponent->IsSimulatingPhysics())
     {

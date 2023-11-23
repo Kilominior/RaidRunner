@@ -17,8 +17,13 @@ UTP_GunComponent::UTP_GunComponent()
 	UE_LOG(LogTemp, Log, TEXT("枪械组件：正在初始化"));
 
 	// 设置子弹生成位置
-	MuzzleOffset.Set(100.0f, 0.0f, 0.0f);
+	MuzzleOffset.Set(180.0f, 0.0f, 100.0f);
 
+	// 设置默认子弹状态，为满仓
+	MagazineCapacity = 25;
+	CurrentAmmoNum = MagazineCapacity;
+
+	// 默认情况下没有主人
 	bHasOwner = false;
 
 	// 默认枪械模型为AR4
@@ -39,6 +44,11 @@ UTP_GunComponent::UTP_GunComponent()
 	if (SA.Succeeded())
 	{
 		ShootAction = SA.Object;
+
+		// 根据枪械种类对输入操作添加触发器，以模拟不同枪械的开枪频率效果
+		UInputTriggerPulse* ShootTrigger = CreateDefaultSubobject<UInputTriggerPulse>(TEXT("ShootTrigger"));
+		ShootTrigger->Interval = 0.15f;
+		ShootAction->Triggers.Add(ShootTrigger);
 	}
 
 	static ConstructorHelpers::FObjectFinder<UInputAction> RA(TEXT("'/Game/Input/Actions/IA_Reload.IA_Reload'"));
@@ -141,43 +151,69 @@ void UTP_GunComponent::Shoot()
 	}
 
 	// 当发射物类存在时才发射
-	if (ProjectileClass)
+	if (!ProjectileClass)
 	{
-		UE_LOG(LogTemp, Log, TEXT("开枪"));
+		return;
+	}
 
-		// 获取枪械主人的控制器
-		APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+	// 当枪械仍有子弹时才发射
+	if (CurrentAmmoNum == 0)
+	{
+		return;
+	}
 
-		// 获取相机朝向
-		const FRotator SpawnRotation = PlayerController->PlayerCameraManager->GetCameraRotation();
-		// 发射方向略微向上倾斜
-		//SpawnRotation.Pitch += 10.0f;
+	UE_LOG(LogTemp, Log, TEXT("开枪，当前子弹数%d"), CurrentAmmoNum);
 
-		// 将枪口偏移从相机空间变换到世界空间
-		const FVector SpawnLocation = OwnerCharacter->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
+	// 当前子弹数减少
+	CurrentAmmoNum--;
 
-		UWorld* World = GetWorld();
-		if (World)
+	// 获取枪械主人的控制器
+	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+
+	// 获取相机朝向
+	const FRotator SpawnRotation = PlayerController->PlayerCameraManager->GetCameraRotation();
+	// 发射方向略微向上倾斜
+	//SpawnRotation.Pitch += 10.0f;
+
+	// 将枪口偏移从相机空间变换到世界空间
+	const FVector SpawnLocation = OwnerCharacter->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
+
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = OwnerCharacter;
+
+		// 若生成位置为碰撞物内，尝试寻找最近可生成位置
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+		// 在枪口位置生成子弹
+		ADefaultProjectile* Projectile = World->SpawnActor<ADefaultProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+		if (Projectile)
 		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = OwnerCharacter;
-
-			// 若生成位置为碰撞物内，则放弃生成
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
-
-			// 在枪口位置生成子弹
-			ADefaultProjectile* Projectile = World->SpawnActor<ADefaultProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
-			if (Projectile)
-			{
-				// 设置子弹的初始轨迹
-				FVector LaunchDirection = SpawnRotation.Vector();
-				Projectile->FireInDirection(LaunchDirection);
-			}
+			// 设置子弹的初始轨迹
+			FVector LaunchDirection = SpawnRotation.Vector();
+			Projectile->FireInDirection(LaunchDirection);
 		}
 	}
 }
 
 void UTP_GunComponent::Reload()
 {
+	// 枪内子弹数量为满时不装弹
+	if (CurrentAmmoNum == MagazineCapacity)
+	{
+		return;
+	}
 
+	// TODO: 角色持有子弹数量为0时不装弹
+
+	// 当发射物类存在时才装弹
+	if (!ProjectileClass)
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("开始上弹，弹容量%d"), MagazineCapacity);
+	CurrentAmmoNum = MagazineCapacity;
 }
