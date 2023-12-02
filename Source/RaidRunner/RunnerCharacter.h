@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
+#include "HealthComponent.h"
 #include "BaseWeapon.h"
 #include "RunnerCharacter.generated.h"
 
@@ -21,6 +23,10 @@ class RAIDRUNNER_API ARunnerCharacter : public ACharacter
 	/** 相机组件 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* RunnerCameraComponent;
+
+	/** 生命组件 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health, meta = (AllowPrivateAccess = "true"))
+	class UHealthComponent* HealthComponent;
 
 	/** 默认输入上下文 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -78,7 +84,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
-public:
+protected:
 	// 视角旋转
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
@@ -99,6 +105,11 @@ public:
 	UFUNCTION()
 	void SlotChangeTo(const int SlotId);
 
+	// 处理生命值的变化
+	UFUNCTION()
+	void OnHealthChanged(UHealthComponent* HealthComp, float Health, float DamageAmount, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
+public:
 	// 返回第一人称Mesh
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 };

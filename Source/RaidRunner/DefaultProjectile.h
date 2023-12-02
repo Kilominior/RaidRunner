@@ -25,6 +25,10 @@ class RAIDRUNNER_API ADefaultProjectile : public AActor
 	UPROPERTY(VisibleAnywhere, Category = Movement)
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
+	// 对玩家造成的伤害类型的容器
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UDamageType> GenericDamageType;
+
 public:	
 	// Sets default values for this actor's properties
 	ADefaultProjectile();

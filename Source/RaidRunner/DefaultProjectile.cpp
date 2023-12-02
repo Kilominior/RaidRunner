@@ -2,6 +2,8 @@
 
 
 #include "DefaultProjectile.h"
+#include "HealthComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ADefaultProjectile::ADefaultProjectile()
@@ -95,10 +97,22 @@ void ADefaultProjectile::FireInDirection(const FVector& ShootDirection)
 void ADefaultProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
     UE_LOG(LogTemp, Log, TEXT("子弹：与%s发生碰撞！"), *OtherActor->GetFName().ToString());
-    // 对于碰撞物，施加一道力
-    if (OtherActor != this && OtherComponent->IsSimulatingPhysics())
+    // 对于碰撞物
+    if (OtherActor != this)
     {
-        OtherComponent->AddImpulseAtLocation(ProjectileMovementComponent->Velocity * 10.0f, Hit.ImpactPoint);
+        // 若正模拟物理，则施加一道力
+        if (OtherComponent->IsSimulatingPhysics())
+        {
+            OtherComponent->AddImpulseAtLocation(ProjectileMovementComponent->Velocity * 10.0f, Hit.ImpactPoint);
+        }
+
+        // 若碰撞物带有生命组件，则对其造成伤害
+        UHealthComponent* OtherHealthComp = OtherActor->GetComponentByClass<UHealthComponent>();
+        if (OtherHealthComp)
+        {
+            UE_LOG(LogTemp, Log, TEXT("子弹：对目标造成伤害！"));
+            UGameplayStatics::ApplyDamage(OtherActor, 10.0f, OtherActor->GetInstigatorController(), this, GenericDamageType);
+        }
     }
 
     // 自我摧毁

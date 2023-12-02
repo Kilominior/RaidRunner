@@ -45,6 +45,9 @@ ARunnerCharacter::ARunnerCharacter()
 	// 不允许玩家看见第三人称Mesh
 	GetMesh()->SetOwnerNoSee(true);
 
+	/* 生命值组件 */
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
+
 	/* 武器槽位状态 */
 	WeaponSlotNow = 0;
 	SwitchingWeaponTo = 0;
@@ -54,10 +57,9 @@ ARunnerCharacter::ARunnerCharacter()
 void ARunnerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	// 显示调试消息五秒
-	check(GEngine != nullptr);
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Using Runner Character."));
+
+	// 注册生命值变化事件，以调用角色自身的生命值变化方法
+	HealthComponent->OnHealthChanged.AddDynamic(this, &ARunnerCharacter::OnHealthChanged);
 
 	// 找到角色控制器，以此获取增强输入上下文并添加到子系统
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
@@ -213,4 +215,15 @@ void ARunnerCharacter::SlotChangeTo(const int SlotId)
 	// 完成切换武器后更新切换武器状态记录
 	WeaponSlotNow = SlotId;
 	SwitchingWeaponTo = 0;
+}
+
+void ARunnerCharacter::OnHealthChanged(UHealthComponent* HealthComp, float Health, float DamageAmount, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	UE_LOG(LogTemp, Log, TEXT("角色%s受到伤害，当前生命值%f"), *this->GetFName().ToString(), Health);
+	// 若生命值耗尽，则销毁角色
+	// TODO：复活
+	if (Health <= 0.0f)
+	{
+		Destroy();
+	}
 }
