@@ -11,4 +11,7 @@ void ARaidRunnerGameModeBase::StartPlay()
 	check(GEngine != nullptr);
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Hello World, this is RaidRunner's GameMode!"));
 
+	UWorld* PersistentWorld = GetWorld();
+	FString LevelName = PersistentWorld->GetCurrentLevel()->GetPathName();
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, LevelName);
 }
