@@ -20,6 +20,10 @@ ARunnerCharacter::ARunnerCharacter()
 	// 绑定到胶囊组件
 	RunnerCameraComponent->SetupAttachment(CastChecked<USceneComponent, UCapsuleComponent>(GetCapsuleComponent()));
 
+	// 将相机绑定到第一人称Mesh上
+	//FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+	//RunnerCameraComponent->AttachToComponent(GetMesh(), AttachmentRules, FName(TEXT("CameraPoint")));
+
 	// 移动到高于模型的位置
 	RunnerCameraComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f + BaseEyeHeight));
 
@@ -47,6 +51,7 @@ ARunnerCharacter::ARunnerCharacter()
 
 	/* 生命值组件 */
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
+	check(HealthComponent != nullptr);
 
 	/* 武器槽位状态 */
 	WeaponSlotNow = 0;
