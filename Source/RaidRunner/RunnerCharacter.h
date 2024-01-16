@@ -44,9 +44,9 @@ class RAIDRUNNER_API ARunnerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
 
-	// 当前使用中的武器槽位
-	UPROPERTY(VisibleAnywhere)
-	uint8 WeaponSlotNow;
+	// 当前使用中的武器槽位，可复制
+	UPROPERTY(Replicated)
+	uint8 CurrentWeaponSlot;
 
 	// 将要切换到的武器槽位，未在切换时为0
 	UPROPERTY(VisibleAnywhere)
@@ -54,7 +54,7 @@ class RAIDRUNNER_API ARunnerCharacter : public ACharacter
 
 	// 当前使用中的武器实例
 	UPROPERTY(VisibleAnywhere)
-	ABaseWeapon* WeaponNow;
+	ABaseWeapon* CurrentWeapon;
 
 	/** 切换到1号武器 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -71,6 +71,9 @@ class RAIDRUNNER_API ARunnerCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	ARunnerCharacter();
+
+	// 属性复制
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -101,9 +104,13 @@ protected:
 	UFUNCTION()
 	void EndSlotChange(const int SlotId);
 
-	// 切换到指定槽位的武器
+	// 实际进行武器切换的操作
 	UFUNCTION()
 	void SlotChangeTo(const int SlotId);
+
+	// 武器的创建和销毁，仅对服务器调用
+	UFUNCTION(Server, Reliable)
+	void OnWeaponChange(const int SlotId);
 
 	// 处理生命值的变化
 	UFUNCTION()

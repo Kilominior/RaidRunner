@@ -14,6 +14,9 @@ ABaseWeapon::ABaseWeapon()
 		// 创建根组件
 		RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("WeaponSceneComponent"));
 	}
+
+	// 要求复制
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned

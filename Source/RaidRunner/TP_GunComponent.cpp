@@ -2,6 +2,7 @@
 
 
 #include "TP_GunComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include <EnhancedInputComponent.h>
@@ -22,6 +23,8 @@ UTP_GunComponent::UTP_GunComponent()
 	// 设置默认子弹状态，为满仓
 	MagazineCapacity = 25;
 	CurrentAmmoNum = MagazineCapacity;
+	
+	BulletDamage = 10.0f;
 
 	// 默认情况下没有主人
 	bHasOwner = false;
@@ -32,6 +35,16 @@ UTP_GunComponent::UTP_GunComponent()
 	{
 		SetSkeletalMesh(Mesh.Object);
 	}
+
+	// 绑定枪支对应的发射物
+	if (!ProjectileClass)
+	{
+		ProjectileClass = CreateDefaultSubobject<ADefaultProjectile>(TEXT("DefaultProjectile"))->GetClass();
+	}
+
+	// 初始化射速
+	FireRate = 0.15f;
+	bIsFiringWeapon = false;
 
 	// 读取枪械输入上下文
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMC(TEXT("'/Game/Input/IMC_Gun.IMC_Gun'"));
@@ -46,9 +59,9 @@ UTP_GunComponent::UTP_GunComponent()
 		ShootAction = SA.Object;
 
 		// 根据枪械种类对输入操作添加触发器，以模拟不同枪械的开枪频率效果
-		UInputTriggerPulse* ShootTrigger = CreateDefaultSubobject<UInputTriggerPulse>(TEXT("ShootTrigger"));
-		ShootTrigger->Interval = 0.15f;
-		ShootAction->Triggers.Add(ShootTrigger);
+		//UInputTriggerPulse* ShootTrigger = CreateDefaultSubobject<UInputTriggerPulse>(TEXT("ShootTrigger"));
+		//ShootTrigger->Interval = FireRate;
+		//ShootAction->Triggers.Add(ShootTrigger);
 	}
 
 	static ConstructorHelpers::FObjectFinder<UInputAction> RA(TEXT("'/Game/Input/Actions/IA_Reload.IA_Reload'"));
@@ -56,12 +69,16 @@ UTP_GunComponent::UTP_GunComponent()
 	{
 		ReloadAction = RA.Object;
 	}
+}
 
-	// 绑定枪支对应的发射物
-	if (!ProjectileClass)
-	{
-		ProjectileClass = CreateDefaultSubobject<ADefaultProjectile>(TEXT("DefaultProjectile"))->GetClass();
-	}
+void UTP_GunComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// 复制当前枪械数据
+	DOREPLIFETIME(UTP_GunComponent, CurrentAmmoNum);
+	DOREPLIFETIME(UTP_GunComponent, bHasOwner);
+	DOREPLIFETIME(UTP_GunComponent, OwnerCharacter);
 }
 
 
@@ -103,24 +120,6 @@ void UTP_GunComponent::AttachWeapon(ARunnerCharacter* TargetCharacter)
 
 	// switch bHasRifle so the animation blueprint can switch to another animation set
 	//OwnerCharacter->SetHasRifle(true);
-
-	if (APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			// 将枪械输入上下文绑定到角色
-			Subsystem->AddMappingContext(GunMappingContext, 1);
-		}
-
-		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent))
-		{
-			// 开枪
-			EnhancedInputComponent->BindAction(ShootAction, ETriggerEvent::Triggered, this, &UTP_GunComponent::Shoot);
-
-			// 装弹
-			EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &UTP_GunComponent::Reload);
-		}
-	}
 }
 
 void UTP_GunComponent::UnbindWeapon()
@@ -132,17 +131,52 @@ void UTP_GunComponent::UnbindWeapon()
 
 	bHasOwner = false;
 
-	// 移除玩家身上的枪械输入上下文
-	if (APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController()))
+	// switch bHasRifle so the animation blueprint can switch to another animation set
+	//OwnerCharacter->SetHasRifle(false);
+}
+
+void UTP_GunComponent::BindInput()
+{
+	// 仅在客户端执行
+	if (OwnerCharacter->IsLocallyControlled())
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		if (APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController()))
 		{
-			Subsystem->RemoveMappingContext(GunMappingContext);
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+			{
+				// 将枪械输入上下文绑定到角色
+				Subsystem->AddMappingContext(GunMappingContext, 1);
+			}
+
+			if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent))
+			{
+				// 开枪
+				EnhancedInputComponent->BindAction(ShootAction, ETriggerEvent::Triggered, this, &UTP_GunComponent::StartFire);
+
+				// 装弹
+				EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &UTP_GunComponent::Reload);
+			}
 		}
 	}
 }
 
-void UTP_GunComponent::Shoot()
+void UTP_GunComponent::UnbindInput()
+{
+	// 仅在客户端执行
+	if (OwnerCharacter->IsLocallyControlled())
+	{
+		// 移除玩家身上的枪械输入上下文
+		if (APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController()))
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+			{
+				Subsystem->RemoveMappingContext(GunMappingContext);
+			}
+		}
+	}
+}
+
+void UTP_GunComponent::StartFire()
 {
 	// 当枪拥有主人时才发射
 	if (!bHasOwner || OwnerCharacter->GetController() == nullptr)
@@ -150,6 +184,23 @@ void UTP_GunComponent::Shoot()
 		return;
 	}
 
+	// 若玩家未处于发射延迟，则启动新延迟并开始发射
+	if (!bIsFiringWeapon)
+	{
+		bIsFiringWeapon = true;
+		UWorld* World = GetWorld();
+		World->GetTimerManager().SetTimer(FiringTimer, this, &UTP_GunComponent::StopFire, FireRate, false);
+		HandleFire();
+	}
+}
+
+void UTP_GunComponent::StopFire()
+{
+	bIsFiringWeapon = false;
+}
+
+void UTP_GunComponent::HandleFire_Implementation()
+{
 	// 当发射物类存在时才发射
 	if (!ProjectileClass)
 	{
@@ -157,7 +208,7 @@ void UTP_GunComponent::Shoot()
 	}
 
 	// 当枪械仍有子弹时才发射
-	if (CurrentAmmoNum == 0)
+	if (CurrentAmmoNum <= 0)
 	{
 		return;
 	}
@@ -182,7 +233,9 @@ void UTP_GunComponent::Shoot()
 	if (World)
 	{
 		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = OwnerCharacter;
+		// 子弹的驱使者是玩家，主人是枪
+		SpawnParams.Instigator = OwnerCharacter->GetInstigator();
+		SpawnParams.Owner = GetOwner();
 
 		// 若生成位置为碰撞物内，尝试寻找最近可生成位置
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
@@ -194,6 +247,9 @@ void UTP_GunComponent::Shoot()
 			// 设置子弹的初始轨迹
 			FVector LaunchDirection = SpawnRotation.Vector();
 			Projectile->FireInDirection(LaunchDirection);
+
+			// 设置子弹的属性
+			Projectile->SetDamage(BulletDamage);
 		}
 	}
 }
@@ -215,5 +271,28 @@ void UTP_GunComponent::Reload()
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("开始上弹，弹容量%d"), MagazineCapacity);
-	CurrentAmmoNum = MagazineCapacity;
+	SetCurrentAmmoNum(MagazineCapacity);
+}
+
+void UTP_GunComponent::SetCurrentAmmoNum_Implementation(const int& Num)
+{
+	CurrentAmmoNum = Num;
+}
+
+void UTP_GunComponent::OnRep_HasOwner()
+{
+	if (OwnerCharacter == nullptr)
+	{
+		return;
+	}
+
+	// 根据主人状态绑定或解绑输入
+	if (bHasOwner)
+	{
+		BindInput();
+	}
+	else
+	{
+		UnbindInput();
+	}
 }

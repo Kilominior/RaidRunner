@@ -12,6 +12,8 @@ AGun::AGun()
 	{
 		// 初始化枪械组件
 		GunComponent = CreateDefaultSubobject<UTP_GunComponent>(TEXT("GunComponent"));
+		check(GunComponent != nullptr);
+		GunComponent->SetIsReplicated(true);
 
 		RootComponent = GunComponent;
 	}
