@@ -4,6 +4,7 @@
 #include "RunnerCharacter.h"
 #include <EnhancedInputComponent.h>
 #include <EnhancedInputSubsystems.h>
+#include "Net/UnrealNetwork.h"
 #include "Gun.h"
 
 // Sets default values
@@ -19,6 +20,10 @@ ARunnerCharacter::ARunnerCharacter()
 
 	// 绑定到胶囊组件
 	RunnerCameraComponent->SetupAttachment(CastChecked<USceneComponent, UCapsuleComponent>(GetCapsuleComponent()));
+
+	// 将相机绑定到第一人称Mesh上
+	//FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+	//RunnerCameraComponent->AttachToComponent(GetMesh(), AttachmentRules, FName(TEXT("CameraPoint")));
 
 	// 移动到高于模型的位置
 	RunnerCameraComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f + BaseEyeHeight));
@@ -47,10 +52,21 @@ ARunnerCharacter::ARunnerCharacter()
 
 	/* 生命值组件 */
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
+	check(HealthComponent != nullptr);
+	HealthComponent->SetIsReplicated(true);
 
 	/* 武器槽位状态 */
-	WeaponSlotNow = 0;
+	CurrentWeaponSlot = 0;
 	SwitchingWeaponTo = 0;
+}
+
+void ARunnerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// 复制当前玩家数据
+	//DOREPLIFETIME(ARunnerCharacter, CurrentWeapon);
+	DOREPLIFETIME(ARunnerCharacter, CurrentWeaponSlot);
 }
 
 // Called when the game starts or when spawned
@@ -138,7 +154,7 @@ void ARunnerCharacter::TrySlotChange(const int SlotId)
 {
 	// 当目前已有其他尝试切换武器的按键按下，则无视该次操作
 	// 当目前所持有武器已经为目标武器，则无视该次操作
-	if (SwitchingWeaponTo != 0 || WeaponSlotNow == SlotId)
+	if (SwitchingWeaponTo != 0 || CurrentWeaponSlot == SlotId)
 	{
 		return;
 	}
@@ -151,7 +167,7 @@ void ARunnerCharacter::EndSlotChange(const int SlotId)
 {
 	// 当目前还有其他尝试切换武器的按键按下，则无视该次操作
 	// 当目前所持有武器已经为目标武器，则无视该次操作
-	if (SwitchingWeaponTo != SlotId || WeaponSlotNow == SlotId)
+	if (SwitchingWeaponTo != SlotId || CurrentWeaponSlot == SlotId)
 	{
 		return;
 	}
@@ -163,17 +179,29 @@ void ARunnerCharacter::SlotChangeTo(const int SlotId)
 {
 	UE_LOG(LogTemp, Log, TEXT("切换到槽位%d的武器"), SlotId);
 
+	// 服务器进行武器的创建和销毁
+	OnWeaponChange(SlotId);
+
+	// 完成切换武器后更新切换武器状态记录
+	SwitchingWeaponTo = 0;
+}
+
+void ARunnerCharacter::OnWeaponChange_Implementation(const int SlotId)
+{
 	UWorld* World = GetWorld();
 	if (World)
 	{
 		// 销毁原来的武器
-		if (WeaponSlotNow != 0 && WeaponNow != nullptr) {
+		if (CurrentWeaponSlot != 0) {
 			UE_LOG(LogTemp, Log, TEXT("销毁原有武器"));
-			// 解绑
-			WeaponNow->UnbindWeapon();
+			if (CurrentWeapon != nullptr)
+			{
+				// 解绑
+				CurrentWeapon->UnbindWeapon();
 
-			// 销毁
-			WeaponNow->Destroy();
+				// 销毁
+				CurrentWeapon->Destroy();
+			}
 		}
 
 		// 初始化生成参数
@@ -192,12 +220,12 @@ void ARunnerCharacter::SlotChangeTo(const int SlotId)
 			FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(FVector(0.0, 0.0, 0.0));
 
 			// 生成武器
-			WeaponNow = World->SpawnActor<AGun>(SpawnLocation, SpawnRotation, SpawnParams);
-			WeaponNow->AttachWeapon(this);
+			CurrentWeapon = World->SpawnActor<AGun>(SpawnLocation, SpawnRotation, SpawnParams);
+			CurrentWeapon->AttachWeapon(this);
 		}
 		else if (SlotId == 2)
 		{
-			
+
 		}
 
 		/*switch (SlotId)
@@ -210,20 +238,15 @@ void ARunnerCharacter::SlotChangeTo(const int SlotId)
 		default:
 			break;
 		}*/
-	}
 
-	// 完成切换武器后更新切换武器状态记录
-	WeaponSlotNow = SlotId;
-	SwitchingWeaponTo = 0;
+		// 完成切换武器后更新切换武器状态记录
+		CurrentWeaponSlot = SlotId;
+	}
 }
 
 void ARunnerCharacter::OnHealthChanged(UHealthComponent* HealthComp, float Health, float DamageAmount, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
-	UE_LOG(LogTemp, Log, TEXT("角色%s受到伤害，当前生命值%f"), *this->GetFName().ToString(), Health);
-	// 若生命值耗尽，则销毁角色
+	// 在实际生命值中扣除伤害数值
+	HealthComp->SetCurrentHealth(Health - DamageAmount);
 	// TODO：复活
-	if (Health <= 0.0f)
-	{
-		Destroy();
-	}
 }
