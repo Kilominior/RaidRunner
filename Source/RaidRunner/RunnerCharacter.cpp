@@ -2,6 +2,7 @@
 
 
 #include "RunnerCharacter.h"
+#include "BrawlGameMode.h"
 #include <EnhancedInputComponent.h>
 #include <EnhancedInputSubsystems.h>
 #include "Net/UnrealNetwork.h"
@@ -65,8 +66,8 @@ void ARunnerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// 复制当前玩家数据
-	//DOREPLIFETIME(ARunnerCharacter, CurrentWeapon);
 	DOREPLIFETIME(ARunnerCharacter, CurrentWeaponSlot);
+	DOREPLIFETIME(ARunnerCharacter, CurrentWeapon);
 }
 
 // Called when the game starts or when spawned
@@ -74,15 +75,40 @@ void ARunnerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (IsLocallyControlled())
+	{
+		// 显示调试消息五秒
+		check(GEngine != nullptr);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Hello, this is RunnerCharacter!"));
+	}
+
 	// 注册生命值变化事件，以调用角色自身的生命值变化方法
 	HealthComponent->OnHealthChanged.AddDynamic(this, &ARunnerCharacter::OnHealthChanged);
+}
 
-	// 找到角色控制器，以此获取增强输入上下文并添加到子系统
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+void ARunnerCharacter::Destroyed()
+{
+	// 在销毁前存下自己控制器的引用
+	AController* PlayerController = GetController();
+
+	Super::Destroyed();
+
+	// 作为服务器执行操作
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		// 若持有武器，则先将其销毁
+		if (CurrentWeaponSlot != 0)
 		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			CurrentWeapon->Destroy();
+		}
+
+		// 向目前的GameMode广播自己的死亡
+		if (UWorld* World = GetWorld())
+		{
+			if (ABrawlGameMode* GameMode = Cast<ABrawlGameMode>(World->GetAuthGameMode()))
+			{
+				GameMode->GetOnPlayerDied().Broadcast(this, PlayerController);
+			}
 		}
 	}
 }

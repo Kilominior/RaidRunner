@@ -83,7 +83,7 @@ void UHealthComponent::OnHealthUpdate()
 		// 若生命值耗尽，则销毁角色
 		if (CurrentHealth <= 0.0f)
 		{
-			FString deathMessage = FString::Printf(TEXT("您已死亡"));
+			FString deathMessage = FString::Printf(TEXT("[客户端]: 您已死亡"));
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, deathMessage);
 		}
 	}
@@ -93,6 +93,15 @@ void UHealthComponent::OnHealthUpdate()
 	{
 		FString healthMessage = FString::Printf(TEXT("[服务器]: 玩家%s当前生命值为%f"), *GetOwner()->GetFName().ToString(), CurrentHealth);
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, healthMessage);
+
+		// 若生命值耗尽，则销毁角色
+		if (CurrentHealth <= 0.0f)
+		{
+			FString deathMessage = FString::Printf(TEXT("[服务器]: 该玩家已死亡，尝试销毁"));
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, deathMessage);
+
+			HealthOwner->Destroy();
+		}
 	}
 
 	// 在所有机器上都执行的功能
