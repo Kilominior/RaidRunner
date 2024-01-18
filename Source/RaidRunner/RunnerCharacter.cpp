@@ -84,6 +84,9 @@ void ARunnerCharacter::BeginPlay()
 
 	// 注册生命值变化事件，以调用角色自身的生命值变化方法
 	HealthComponent->OnHealthChanged.AddDynamic(this, &ARunnerCharacter::OnHealthChanged);
+
+	// 默认持有武器1
+	//OnWeaponChange(1);
 }
 
 void ARunnerCharacter::Destroyed()
@@ -170,8 +173,8 @@ void ARunnerCharacter::Move(const FInputActionValue& Value)
 	// TODO: 最终施加的力为移动方向 * 速度
 	if (Controller != nullptr)
 	{
-		AddMovementInput(GetActorForwardVector(), MovementDir.Y);
-		AddMovementInput(GetActorRightVector(), MovementDir.X);
+		AddMovementInput(GetActorForwardVector(), MovementDir.Y * 0.6f);
+		AddMovementInput(GetActorRightVector(), MovementDir.X * 0.6f);
 		//UE_LOG(LogTemp, Log, TEXT("行动方向：%f, %f"), MovementDir.X, MovementDir.Y);
 	}
 }
@@ -251,7 +254,7 @@ void ARunnerCharacter::OnWeaponChange_Implementation(const int SlotId)
 		}
 		else if (SlotId == 2)
 		{
-
+			
 		}
 
 		/*switch (SlotId)

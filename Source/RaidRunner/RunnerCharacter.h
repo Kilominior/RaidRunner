@@ -121,5 +121,14 @@ protected:
 
 public:
 	// 返回第一人称Mesh
+	UFUNCTION()
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+
+	UHealthComponent* GetHealthComponent() const { return HealthComponent; }
+
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	ABaseWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
+
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	uint8 GetCurrentWeaponSlot() const { return CurrentWeaponSlot; }
 };

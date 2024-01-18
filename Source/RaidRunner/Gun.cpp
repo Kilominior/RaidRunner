@@ -8,6 +8,11 @@
 // Sets default values
 AGun::AGun()
 {
+	// 初始化武器数据
+	WeaponName = TEXT("AR4");
+	MagazineCapacity = 25;
+	CurrentAmmoNum = MagazineCapacity;
+
 	if (!GunComponent)
 	{
 		// 初始化枪械组件

@@ -26,6 +26,7 @@ void ABrawlGameMode::BeginPlay()
     {
         OnPlayerDied.AddDynamic(this, &ABrawlGameMode::PlayerDied);
     }
+
 }
 
 void ABrawlGameMode::PlayerDied(ACharacter* Character, AController* CharacterController)

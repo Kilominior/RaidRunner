@@ -2,6 +2,7 @@
 
 
 #include "BaseWeapon.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ABaseWeapon::ABaseWeapon()
@@ -15,8 +16,20 @@ ABaseWeapon::ABaseWeapon()
 		RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("WeaponSceneComponent"));
 	}
 
+	// 初始化武器属性
+	WeaponName = TEXT("Weapon");
+	CurrentAmmoNum = 0;
+	MagazineCapacity = 0;
+
 	// 要求复制
 	bReplicates = true;
+}
+
+void ABaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABaseWeapon, CurrentAmmoNum);
 }
 
 // Called when the game starts or when spawned
@@ -44,4 +57,9 @@ void ABaseWeapon::AttachWeapon(ARunnerCharacter* TargetCharacter)
 
 void ABaseWeapon::UnbindWeapon()
 {
+}
+
+void ABaseWeapon::SetCurrentAmmoNum_Implementation(const int& Num)
+{
+	CurrentAmmoNum = Num;
 }

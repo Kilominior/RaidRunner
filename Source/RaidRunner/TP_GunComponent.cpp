@@ -217,6 +217,11 @@ void UTP_GunComponent::HandleFire_Implementation()
 
 	// 当前子弹数减少
 	CurrentAmmoNum--;
+	
+	// 对枪械本身更新当前子弹数
+	// TODO: 将该组件的功能合并到Gun中，避免数值重复
+	ABaseWeapon* OwnerWeapon = Cast<ABaseWeapon>(GetOwner());
+	OwnerWeapon->SetCurrentAmmoNum(CurrentAmmoNum);
 
 	// 获取枪械主人的控制器
 	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
@@ -272,6 +277,11 @@ void UTP_GunComponent::Reload()
 
 	UE_LOG(LogTemp, Log, TEXT("开始上弹，弹容量%d"), MagazineCapacity);
 	SetCurrentAmmoNum(MagazineCapacity);
+
+	// 对枪械本身更新当前子弹数
+	// TODO: 将该组件的功能合并到Gun中，避免数值重复
+	ABaseWeapon* OwnerWeapon = Cast<ABaseWeapon>(GetOwner());
+	OwnerWeapon->SetCurrentAmmoNum(MagazineCapacity);
 }
 
 void UTP_GunComponent::SetCurrentAmmoNum_Implementation(const int& Num)

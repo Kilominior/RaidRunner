@@ -84,11 +84,11 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	// 将武器绑定到目标角色
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	UFUNCTION(BlueprintCallable, Category = "Binding")
 	void AttachWeapon(ARunnerCharacter* TargetCharacter);
 
 	// 将武器与角色解绑
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	UFUNCTION(BlueprintCallable, Category = "Binding")
 	void UnbindWeapon();
 
 protected:
@@ -111,7 +111,7 @@ protected:
 	void HandleFire();
 
 	// 装弹
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	UFUNCTION(BlueprintCallable, Category = "Gameplay")
 	void Reload();
 
 	// 设置子弹数量，仅在服务器调用
