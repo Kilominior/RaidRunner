@@ -29,9 +29,13 @@ protected:
 	/** 定时器句柄，用于提供生成间隔时间内的射速延迟 */
 	FTimerHandle FiringTimer;
 
-	/** 枪口相对于相机位置的偏移 */
+	/** 射线出发点相对于相机位置的偏移 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gun")
 	FVector MuzzleOffset;
+
+	/** 开火粒子特效 */
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	class UParticleSystem* FireEffect;
 
 	// 弹仓内当前的子弹数量
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Bullet")

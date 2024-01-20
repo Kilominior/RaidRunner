@@ -91,7 +91,7 @@ uint8 ARunnerController::GetPlayerMaxHealth()
 	{
 		return FMath::CeilToInt(CurrentCharacter->GetHealthComponent()->GetMaxHealth());
 	}
-	return 0;
+	return 1;
 }
 
 uint8 ARunnerController::GetPlayerWeaponSlot()
