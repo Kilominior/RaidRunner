@@ -29,8 +29,8 @@ class RAIDRUNNER_API ARunnerCharacter : public ACharacter
 	class UHealthComponent* HealthComponent;
 
 	/** 默认输入上下文 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputMappingContext* DefaultMappingContext;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	//class UInputMappingContext* DefaultMappingContext;
 
 	/** 视角旋转输入 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -45,7 +45,7 @@ class RAIDRUNNER_API ARunnerCharacter : public ACharacter
 	class UInputAction* JumpAction;
 
 	// 当前使用中的武器槽位，可复制
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, VisibleAnywhere)
 	uint8 CurrentWeaponSlot;
 
 	// 将要切换到的武器槽位，未在切换时为0
@@ -53,7 +53,7 @@ class RAIDRUNNER_API ARunnerCharacter : public ACharacter
 	uint8 SwitchingWeaponTo;
 
 	// 当前使用中的武器实例
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Replicated, VisibleAnywhere)
 	ABaseWeapon* CurrentWeapon;
 
 	/** 切换到1号武器 */
@@ -78,6 +78,9 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	// 被销毁时调用
+	virtual void Destroyed();
 
 public:	
 	// Called every frame
@@ -118,5 +121,14 @@ protected:
 
 public:
 	// 返回第一人称Mesh
+	UFUNCTION()
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+
+	UHealthComponent* GetHealthComponent() const { return HealthComponent; }
+
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	ABaseWeapon* GetCurrentWeapon() const { return CurrentWeapon; }
+
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	uint8 GetCurrentWeaponSlot() const { return CurrentWeaponSlot; }
 };

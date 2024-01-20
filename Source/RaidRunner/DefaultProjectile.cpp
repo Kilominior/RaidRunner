@@ -57,7 +57,7 @@ ADefaultProjectile::ADefaultProjectile()
         {
             ProjectileMesh->SetStaticMesh(Mesh.Object);
 
-            ProjectileMesh->SetRelativeScale3D(FVector(5.0, 5.0, 5.0));
+            //ProjectileMesh->SetRelativeScale3D(FVector(5.0, 5.0, 5.0));
             ProjectileMesh->SetRelativeRotation(FRotator(0.0, -90.0, 0.0));
             ProjectileMesh->SetupAttachment(RootComponent);
         }

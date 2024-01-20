@@ -7,6 +7,8 @@
 #include "InputAction.h"
 #include <EnhancedInputComponent.h>
 #include <EnhancedInputSubsystems.h>
+#include "Particles/ParticleSystem.h"
+#include "UObject/ConstructorHelpers.h"
 
 // Sets default values for this component's properties
 UTP_GunComponent::UTP_GunComponent()
@@ -18,7 +20,7 @@ UTP_GunComponent::UTP_GunComponent()
 	UE_LOG(LogTemp, Log, TEXT("枪械组件：正在初始化"));
 
 	// 设置子弹生成位置
-	MuzzleOffset.Set(180.0f, 0.0f, 100.0f);
+	MuzzleOffset.Set(150.0f, 0.0f, 100.0f);
 
 	// 设置默认子弹状态，为满仓
 	MagazineCapacity = 25;
@@ -34,6 +36,16 @@ UTP_GunComponent::UTP_GunComponent()
 	if (Mesh.Succeeded())
 	{
 		SetSkeletalMesh(Mesh.Object);
+	}
+
+	// 绑定开枪特效
+	if (!FireEffect)
+	{
+		static ConstructorHelpers::FObjectFinder<UParticleSystem> DefaultFireEffect(TEXT("/Game/StarterContent/Particles/P_Explosion.P_Explosion"));
+		if (DefaultFireEffect.Succeeded())
+		{
+			FireEffect = DefaultFireEffect.Object;
+		}
 	}
 
 	// 绑定枪支对应的发射物
@@ -217,14 +229,17 @@ void UTP_GunComponent::HandleFire_Implementation()
 
 	// 当前子弹数减少
 	CurrentAmmoNum--;
+	
+	// 对枪械本身更新当前子弹数
+	// TODO: 将该组件的功能合并到Gun中，避免数值重复
+	ABaseWeapon* OwnerWeapon = Cast<ABaseWeapon>(GetOwner());
+	OwnerWeapon->SetCurrentAmmoNum(CurrentAmmoNum);
 
 	// 获取枪械主人的控制器
 	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
 
 	// 获取相机朝向
 	const FRotator SpawnRotation = PlayerController->PlayerCameraManager->GetCameraRotation();
-	// 发射方向略微向上倾斜
-	//SpawnRotation.Pitch += 10.0f;
 
 	// 将枪口偏移从相机空间变换到世界空间
 	const FVector SpawnLocation = OwnerCharacter->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
@@ -251,6 +266,12 @@ void UTP_GunComponent::HandleFire_Implementation()
 			// 设置子弹的属性
 			Projectile->SetDamage(BulletDamage);
 		}
+
+		// 在枪口处生成开火特效
+		FVector EmitterLocation = GetSocketLocation(TEXT("FirePos"));
+		FRotator EmitterRotation = GetSocketRotation(TEXT("FirePos"));
+
+		UGameplayStatics::SpawnEmitterAtLocation(GetOwner(), FireEffect, EmitterLocation, EmitterRotation, true, EPSCPoolMethod::AutoRelease);
 	}
 }
 
@@ -272,6 +293,11 @@ void UTP_GunComponent::Reload()
 
 	UE_LOG(LogTemp, Log, TEXT("开始上弹，弹容量%d"), MagazineCapacity);
 	SetCurrentAmmoNum(MagazineCapacity);
+
+	// 对枪械本身更新当前子弹数
+	// TODO: 将该组件的功能合并到Gun中，避免数值重复
+	ABaseWeapon* OwnerWeapon = Cast<ABaseWeapon>(GetOwner());
+	OwnerWeapon->SetCurrentAmmoNum(MagazineCapacity);
 }
 
 void UTP_GunComponent::SetCurrentAmmoNum_Implementation(const int& Num)

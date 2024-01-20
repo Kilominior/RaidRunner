@@ -13,6 +13,9 @@ UCLASS()
 class RAIDRUNNER_API ARaidRunnerGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
-	virtual void StartPlay() override;
+
+public:
+    // 开始游戏时进行必要操作
+    virtual void StartPlay() override;
+
 };

@@ -3,11 +3,11 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class RaidRunnerEditorTarget : TargetRules
+public class RaidRunnerClientTarget : TargetRules
 {
-	public RaidRunnerEditorTarget( TargetInfo Target) : base(Target)
+	public RaidRunnerClientTarget( TargetInfo Target) : base(Target)
 	{
-		Type = TargetType.Editor;
+		Type = TargetType.Client;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
 		ExtraModuleNames.Add("RaidRunner");
